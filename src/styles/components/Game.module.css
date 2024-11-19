@@ -1,0 +1,6 @@
+.Game {
+	border: 1px solid #4b4747;
+	background-image: url('/back.png');
+	background-size: cover;  	
+	width: 100%;
+}
