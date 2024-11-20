@@ -29,6 +29,5 @@ Config values are in `.env`.
 npm run dev
 ```
 
-## Preview
-
-![Crash Screenshot](docs/crash.png)
+## Caution
+use node.js 18.17+
