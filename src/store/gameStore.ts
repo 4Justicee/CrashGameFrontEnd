@@ -215,12 +215,17 @@ export const useGameStore = create<GameState>((set, get) => {
 				gameWaitTimer = null;
 			}
 
-			gameWaitTimer = setInterval(gameWaiter, 1000);
+			//gameWaitTimer = setInterval(gameWaiter, 1000);
 		}
 		else if(data.type == 'g') {
 			set({
 				multiplier: params.m.toFixed(2),
 				timeElapsed: params.e
+			});
+		}
+		else if(data.type == 'r') {
+			set({
+				timeRemaining: params.t,
 			});
 		}
 		else if(data.type == "GameRunning") {
