@@ -217,6 +217,12 @@ export const useGameStore = create<GameState>((set, get) => {
 
 			gameWaitTimer = setInterval(gameWaiter, 1000);
 		}
+		else if(data.type == 'g') {
+			set({
+				multiplier: params.m.toFixed(2),
+				timeElapsed: params.e
+			});
+		}
 		else if(data.type == "GameRunning") {
 			//console.log('Game in running state')
 
@@ -237,7 +243,7 @@ export const useGameStore = create<GameState>((set, get) => {
 				gameRunTimer = null;
 			}
 
-			gameRunTimer = setInterval(gameRunner, 5);
+			//gameRunTimer = setInterval(gameRunner, 5);
 		}
 		else if(data.type == "GameCrashed") {
 			//console.log('Game in crashed state')
