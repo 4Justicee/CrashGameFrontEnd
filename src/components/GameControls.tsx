@@ -14,7 +14,6 @@ import { toast } from "sonner"
 
 import { useGameStore, GameState } from '../store/gameStore';
 import { useEffectEvent } from '../hooks/useEffectEvent';
-//import useWalletAuth from '../hooks/useWalletAuth';
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

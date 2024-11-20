@@ -7,25 +7,14 @@ import { useGameStore, GameState } from '../store/gameStore';
 import styles from '../styles/components/Game.module.css';
 import { getMultiplier, getValueMultiplier, calculateXI, interpolate, calculateYI} from '@/lib/utils';
 
-const height = 2000;
-const coeffB = 0.5;
-const coeffA = height*0.16;
-
-let rocketImage: HTMLImageElement;
 let explodeImage: HTMLImageElement;
-let parachuteImage: HTMLImageElement;
 let craneImage: HTMLImageElement;
 let loadImage: HTMLImageElement;
 
 if (typeof window !== 'undefined') {
-	rocketImage = new Image();
-	rocketImage.src = 'rocket.svg';
 
 	explodeImage = new Image();
 	explodeImage.src = 'explode.svg';
-
-	parachuteImage = new Image();
-	parachuteImage.src = 'parachute.svg'
 
 	craneImage = new Image();
 	craneImage.src = 'crane.png'
@@ -33,9 +22,6 @@ if (typeof window !== 'undefined') {
 	loadImage = new Image();
 	loadImage.src = 'load.png'
 }
-
-const rocketWidth = 220;
-const rocketHeight = 220;
 
 const craneWidth = 3600;
 const craneHeight = 2200;
@@ -47,11 +33,7 @@ const xStartPosition = 1000;
 const xMaxPosition = 3500; //max length of crane arm
 
 const aa = 0.455;	
-const bb = 245; //ax+b of arm of crane
-
-function curveFunction(t: number) {
-	return coeffA * (Math.exp(coeffB * t) - 1);
-}
+const bb = 247; //ax+b of arm of crane
 
 function render(
 	gameState: GameState,
@@ -64,8 +46,8 @@ function render(
 
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
-	const maxX = canvas.width - rocketWidth;
-	const minY = rocketHeight;
+	const maxX = canvas.width - loadWidth;
+	const minY = loadHeight;
 
 	context.save();
 
@@ -88,14 +70,40 @@ function render(
 
 	if (gameState.status == 'Waiting')
 		drawCountdown(context, gameState.timeRemaining);
-	else {
-		drawMultiplier(context, gameState.multiplier);		
-		drawTimeAxis(context, gameState.timeElapsed, canvas.width, gameState.maxTime); 
-		drawValueAxis(context, gameState.multiplier, canvas.height, gameState.maxTime); 
+	else if(gameState.status == "Crashed" && gameState.myWin == 1) {
+		drawResultText(context, 'lose');		
+	}
+	else {		
+		if(gameState.myWin == 2 && Date.now() - gameState.winTime < 1500) {						
+			drawResultText(context, 'win')
+		}
+		else {
+			drawMultiplier(context, gameState.multiplier);		
+		}
+		drawTimeAxis(context, gameState.timeElapsed, canvas.width); 
+		drawValueAxis(context, gameState.multiplier, canvas.height); 
 	}
 }
 
-function drawTimeAxis(context:CanvasRenderingContext2D, currentTime:number,canvasWidth:number, totalGameTime:number) {  
+function drawResultText(
+	context: CanvasRenderingContext2D,
+	result: string,
+) {
+	const canvas = context.canvas;
+
+	if (result == 'lose')
+		context.fillStyle = 'red';
+	else 
+		context.fillStyle = 'blue';
+
+	context.font = '240px Arial';
+	const text = result.toUpperCase();
+	const textWidth = context.measureText(text).width;
+
+	context.fillText(text, canvas.width / 2 - textWidth / 2, canvas.height / 2);
+}
+
+function drawTimeAxis(context:CanvasRenderingContext2D, currentTime:number,canvasWidth:number) {  
     const numIntervals = 10;  // You can adjust this for more or fewer time markers  
     const interval = (xMaxPosition - xStartPosition) / numIntervals;  
 	const canvas = context.canvas;
@@ -116,7 +124,7 @@ function drawTimeAxis(context:CanvasRenderingContext2D, currentTime:number,canva
     context.stroke();  
 } 
 
-function drawValueAxis(context:CanvasRenderingContext2D, multiplier:string,canvasHeight:number, totalGameTime:number) {  
+function drawValueAxis(context:CanvasRenderingContext2D, multiplier:string,canvasHeight:number) {  
     const numIntervals = 10;  // You can adjust this for more or fewer time markers  
     const interval = canvasHeight / numIntervals;  
 	const v = getValueMultiplier((Number)(multiplier));
@@ -250,10 +258,10 @@ function drawCrashedLoad(
 
 	context.stroke();
 
-    if (crashedTime < 1500) {  
+    if (crashedTime < 1000) {  
         const canvasHeight = context.canvas.height;  
         const maxTravelDistance = canvasHeight - y - 80;  // Maximum distance the image can move downward  
-        newY += maxTravelDistance * (crashedTime / 1500); // Interpolate position  
+        newY += maxTravelDistance * (crashedTime / 1000); // Interpolate position  
 
 		context.translate(x - loadWidth/2,  newY - loadHeight/2);
 		context.drawImage(loadImage, 0, 0, loadWidth, loadHeight);
@@ -275,9 +283,9 @@ export default function Game() {
 		const ctx = canvasRef.current?.getContext('2d');
 		if (canvasRef.current) {
 			const canvas = canvasRef.current;
-			const aspectRatio = canvas.clientWidth / canvas.clientHeight;
+			const aspectRatio = canvas.clientWidth / canvas.clientHeight;			
 			canvas.width = 4000;
-			canvas.height = Math.round(4000 * aspectRatio);
+			canvas.height = 2000;//Math.round(4000 * aspectRatio);
 		}
 		setContext(ctx);
 	}, []);

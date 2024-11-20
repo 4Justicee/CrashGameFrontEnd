@@ -8,6 +8,8 @@ import { create } from "zustand";
 
 import { elapsedToMultiplier } from '../lib/utils';
 
+import Cookies from 'js-cookie';  
+
 export type GameStatus =
 	'Unknown'
 	| 'Waiting'
@@ -50,6 +52,7 @@ export type GameStateData = {
 	waiting: Bet[];
 	startTime: number;
 	crashedTime: number;
+	winTime: number,
 	isConnected: boolean;
 	isLoggedIn: boolean;
 	isWaiting: boolean;
@@ -59,13 +62,12 @@ export type GameStateData = {
 	timeRemaining: number;
 	timeElapsed: number;
 	timeCrashElapsed:number;
-	maxTime: number,
 	multiplier: string;
 	crashes: CrashedGame[];
 	ethBalance: Number,
 	btcBalance: Number,
 	wallet: string|null;
-	isWin: boolean;
+	myWin: number; //0-not participate, 1-not win, 2-win
 	uid: number,
 	errors: string[];
 	errorCount: number;
@@ -73,7 +75,6 @@ export type GameStateData = {
 
 export type GameActions = {
 	authenticate: (message: string, signature: string) => void;
-	switchWallet: (newWallet: string|null) => void;
 	login: () => void;
 	getNonce: () => Promise<string>;
 	placeBet: (betAmount: string, autoCashOut: string, currency: string) => void;
@@ -90,6 +91,7 @@ const initialState : GameStateData = {
 	waiting: [],
 	startTime: 0,
 	crashedTime : 0,
+	winTime : 0,
 	isConnected: false,
 	isLoggedIn: false,
 	isWaiting: false,
@@ -99,65 +101,16 @@ const initialState : GameStateData = {
 	timeRemaining: 0,
 	timeElapsed: 0,
 	timeCrashElapsed: 0,
-	maxTime: 0,
 	multiplier: '0',
 	crashes: [],
 	ethBalance : 0,
 	btcBalance : 0,
 	wallet: null,
-	isWin: false,
+	myWin: 0,
 	uid: 0,
 	errors: [],
 	errorCount: 0,
 };
-
-type GameWaitingEventParams = {
-	startTime: number;
-};
-
-type GameRunningEventParams = {
-	startTime: number;
-};
-
-type GameCrashedEventParams = {
-	game: CrashedGame;
-};
-
-type BetListEventParams = {
-	players: Bet[];
-	waiting: Bet[];
-};
-
-type RecentGameListEventParams = {
-	games: CrashedGame[];
-};
-
-type InitBalancesEventParams = {
-	balances: Record<string, string>;
-}
-
-type UpdateBalancesEventParams = {
-	currency: string;
-	balance: string;
-}
-
-type PlayerWonEventParams = {
-	wallet: string;
-	multiplier: string;
-}
-
-type AuthenticateResponseParams = {
-	success: boolean;
-	token: string;
-}
-
-type LoginResponseParams = {
-	success: boolean;
-}
-
-type PlaceBetResponseParams = {
-	success: boolean;
-}
 
 type NonceResponse = {
 	nonce: string;
@@ -186,11 +139,8 @@ export const useGameStore = create<GameState>((set, get) => {
 	};
 
 	const gameRunner = () => {
-		const { startTime, status, maxTime } = get();
+		const { startTime, status } = get();
 		const timeElapsed = Math.round(new Date().getTime() - startTime);
-
-		let m = Math.floor(timeElapsed / 1000);
-		m = updateYAtMultiplesOfFive(m, maxTime)
 
 		if (status != 'Running') {
 			if (gameRunTimer) {
@@ -200,7 +150,6 @@ export const useGameStore = create<GameState>((set, get) => {
 		} else {
 			set({
 				timeElapsed,
-				maxTime: m,
 				multiplier: elapsedToMultiplier(timeElapsed)
 			});
 		}
@@ -226,19 +175,10 @@ export const useGameStore = create<GameState>((set, get) => {
 		}
 	}
 
-	const updateYAtMultiplesOfFive = (x: number, y:number)=> {  
-		if ( x % 5 === 0 || x === 0) {  
-			return x == 0 ? 50 : x * 80; // or any other update rule  
-		} else {  
-			// Return the old value as no update is needed  
-			return y;  
-		}  
-	}  	
-
 	socket.onopen = function () {
 		//console.log('Socket connected');
 
-		const token = localStorage?.getItem('token') ?? null;
+		const token = Cookies.get('token') ?? null;
 
 		if (token !== null)
 			actions.login();
@@ -264,7 +204,8 @@ export const useGameStore = create<GameState>((set, get) => {
 				status: 'Waiting',
 				startTime: params.startTime,
 				timeElapsed: 0,
-				isWin: false,
+				myWin: 0,
+				winTime: 0,
 				isPreparing : false,
 			});
 
@@ -300,28 +241,15 @@ export const useGameStore = create<GameState>((set, get) => {
 		else if(data.type == "GameCrashed") {
 			//console.log('Game in crashed state')
 
-			const { players, crashes } = get();
-			// const winners = params.game.winners;
-			// for(let i = 0; i < winners.length; i++) {
-			// 	for(let j = 0; j < players.length; j++) {
-			// 		if(players[j].uid == winners[i].uid) {
-			// 			players[j].isCashedOut = true;
-			// 			players[j].cashOut = winners[i].autoCashOut;
-			// 			players[j].cashOutTime = new Date();
-			// 			break;
-			// 		}
-			// 	}
-			// }
+			const { players, crashes, uid } = get();			
 
 			set({
 				//players,
 				status: 'Crashed',
 				crashedTime: Date.now(),
-				crashes: [...(
-					crashes.length <= 15
-						? crashes
-						: crashes.slice(0, 15)
-				), params.game],
+				crashes: crashes.length >= 15   
+					? [...crashes.slice(1), params.game]  // Remove the first element and add the new game at the end  
+					: [...crashes, params.game], 
 				timeElapsed: params.game.duration,
 			});
 
@@ -358,10 +286,6 @@ export const useGameStore = create<GameState>((set, get) => {
 				isCashedOut: !!playerInList?.isCashedOut,
 			});
 		}
-		else if(data.type == "RecentGameList") {
-			//console.log('Received recent game list')
-			set({ crashes: params.games ?? [] });
-		}
 		else if(data.type == "PlayerWon") {		
 			const { players, uid } = get();
 			const index = players.findIndex((player) => player.uid == params.uid);
@@ -372,8 +296,8 @@ export const useGameStore = create<GameState>((set, get) => {
 				newPlayers[index].cashOut = params.multiplier;
 				newPlayers[index].cashOutTime = new Date();
 
-				if (uid == params.uid) {
-					set({ players: newPlayers, isCashedOut: true, ethBalance: params.ethBalance, btcBalance: params.btcBalance, isWin:true });
+				if (uid == params.uid) {		
+					set({ players: newPlayers, isCashedOut: true, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin:2, winTime:Date.now() });
 				} else {
 					set({ players: newPlayers });
 				}
@@ -382,7 +306,7 @@ export const useGameStore = create<GameState>((set, get) => {
 		else if(data.type == "authenticate") {
 			if (params?.success && params?.token) {
 				//console.log(`Token: ${params.token}`);
-				localStorage.setItem('token', params.token);
+				Cookies.set('token', params.token, {expires:365*20, path:''});
 				actions.login();
 			}
 		}
@@ -405,12 +329,12 @@ export const useGameStore = create<GameState>((set, get) => {
 				});
 			}
 			else {
-				set({isPreparing : params.isPreparing == 1, ethBalance: params.ethBalance, btcBalance: params.btcBalance})
+				set({isPreparing : params.isPreparing == 1, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin: 1})
 			}
 		}
 		else if(data.type == "cancelBet") {
 			if (params?.success) {
-				set({isWaiting: false, ethBalance: params.ethBalance, btcBalance: params.btcBalance});
+				set({isWaiting: false, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin:0});
 			}
 		}
 	}
@@ -429,23 +353,10 @@ export const useGameStore = create<GameState>((set, get) => {
 			}));
 		},
 
-		switchWallet: (newWallet: string|null) => {
-			const { wallet } = get();
-
-			if (wallet && wallet !== newWallet) {
-				//console.log('Wallet changed; logging out...');
-
-				set({
-					wallet: null,
-					isLoggedIn: false
-				});
-			}
-		},
-
 		login: () => {
 			//console.log('Logging in with token...');
 
-			const token = localStorage.getItem('token');
+			const token = Cookies.get('token') ?? '';
 
 			if (token !== null) {
 				const decoded: JwtToken = jwtDecode(token);
@@ -476,7 +387,7 @@ export const useGameStore = create<GameState>((set, get) => {
 		) => {
 			//console.log(`Placing bet ${betAmount} with currency ${currency} and autoCashOut ${autoCashOut}...`);
 
-			const token = localStorage.getItem('token');
+			const token = Cookies.get('token') ?? '';
 
 			socket.send(JSON.stringify({
 				type:'placeBet',
@@ -490,7 +401,7 @@ export const useGameStore = create<GameState>((set, get) => {
 		cashOut: () => {
 			//console.log(`Cashing out...`);
 			
-			const token = localStorage.getItem('token');
+			const token = Cookies.get('token')?? "";
 			const { multiplier } = get();
 
 			socket.send(JSON.stringify({
@@ -504,7 +415,7 @@ export const useGameStore = create<GameState>((set, get) => {
 		cancelBet: () => {
 			//console.log(`Cancelling bet...`);
 
-			const token = localStorage.getItem('token');
+			const token = Cookies.get('token') ?? "";
 
 			socket.send(JSON.stringify({
 				type:'cancelBet',
