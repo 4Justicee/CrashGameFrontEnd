@@ -206,7 +206,7 @@ function calcLoadPosition(
 		vx = vx < 0 ? 0 : vx;
 		vy = vy < 0 ? 0 : vy;
 		vy = vy > originY - 85 ? originY - 85 : vy;
-
+		vx = isNaN(vx) ? 0 : vx;
 		lastX = vx + xStartPosition;
 		lastY = vy;
 	}	

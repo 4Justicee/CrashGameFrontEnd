@@ -230,7 +230,8 @@ export const useGameStore = create<GameState>((set, get) => {
 
 			set({
 				startTime: params.startTime,
-				status: 'Running'
+				status: 'Running',
+				timeRemaining:0,
 			});
 
 			if (gameWaitTimer) {
