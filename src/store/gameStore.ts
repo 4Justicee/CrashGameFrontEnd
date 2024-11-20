@@ -207,6 +207,7 @@ export const useGameStore = create<GameState>((set, get) => {
 				myWin: 0,
 				winTime: 0,
 				isPreparing : false,
+				multiplier : '0',
 			});
 
 			if (gameWaitTimer) {
