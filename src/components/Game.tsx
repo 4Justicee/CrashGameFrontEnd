@@ -8,7 +8,7 @@ import styles from '../styles/components/Game.module.css';
 import { getMultiplier, getValueMultiplier, calculateXI, interpolate, calculateYI} from '@/lib/utils';
 
 let explodeImage: HTMLImageElement;
-let craneImage: HTMLImageElement;
+//let craneImage: HTMLImageElement;
 let loadImage: HTMLImageElement;
 
 if (typeof window !== 'undefined') {
@@ -16,15 +16,15 @@ if (typeof window !== 'undefined') {
 	explodeImage = new Image();
 	explodeImage.src = 'explode.svg';
 
-	craneImage = new Image();
-	craneImage.src = 'crane.png'
+	//craneImage = new Image();
+	//craneImage.src = 'crane.png'
 
 	loadImage = new Image();
 	loadImage.src = 'load.png'
 }
 
-const craneWidth = 3600;
-const craneHeight = 2200;
+//const craneWidth = 3600;
+//const craneHeight = 2200;
 
 const loadWidth = 180;
 const loadHeight = 190;
@@ -32,8 +32,8 @@ const loadHeight = 190;
 const xStartPosition = 1000;
 const xMaxPosition = 3500; //max length of crane arm
 
-const aa = 0.455;	
-const bb = 247; //ax+b of arm of crane
+const aa = 0.517;	
+const bb = 110; //ax+b of arm of crane
 
 function render(
 	gameState: GameState,
@@ -145,7 +145,7 @@ function drawValueAxis(context:CanvasRenderingContext2D, multiplier:string,canva
 } 
 
 function drawCrane(context: CanvasRenderingContext2D) {
-	context.drawImage(craneImage, 0, 0, craneWidth, craneHeight);
+	//context.drawImage(craneImage, 0, 0, craneWidth, craneHeight);
 }
 
 function drawMultiplier(
@@ -222,7 +222,7 @@ function drawLoad(
 ) {
 
 	context.strokeStyle = '#707070';  // Red line  
-	context.lineWidth = 5;
+	context.lineWidth = 8;
 	context.beginPath();
 
 	context.moveTo(x-5, y);  // Start point (x, y)  
@@ -247,7 +247,7 @@ function drawCrashedLoad(
 ) {
 	let newY = y;  
 	context.strokeStyle = '#707070';  // Red line  
-	context.lineWidth = 5;
+	context.lineWidth = 8;
 	context.beginPath();
 
 	context.moveTo(x-5, y-60);  // Start point (x, y)  
