@@ -10,8 +10,9 @@ import GameLayout from '../components/GameLayout';
 import { toast } from "sonner"
 import GameControllers from '@/components/GameControls';
 import GamePlayerList from '@/components/BetList';
-
-import useWindowSize from '@/components/ui/size';
+import Modal from '@/components/ui/fair-modal';
+import SimpleBar from 'simplebar-react';  
+import 'simplebar-react/dist/simplebar.min.css';  
 
 const GameTypeTab = () => {
 	const classicGame = ()=> {
@@ -56,10 +57,21 @@ const GameContent = ()=>{
 
 const GameButtons = () => {
 	const [isMobile, setIsMobile] = useState(false);  
-  
+	
+	const [isModalOpen, setModalOpen] = useState(false);  
+
+    const handleOpenModal = () => {  
+        setModalOpen(true);  
+    };  
+    const handleCloseModal = () => {  
+        setModalOpen(false);  
+    };  
+
 	useEffect(() => {  
 		setIsMobile(window.innerWidth < 768);  
 	}, []);  
+
+	const crashes = useGameStore((gameState) => gameState.crashes);
 
 	return (
 		<div className="relative justify-between bg-layer3 h-12 md:justify-self-end md:static w-full md:px-5 px-1 flex border-t border-third rounded-b-xl z-[100] order-last">
@@ -75,36 +87,10 @@ const GameButtons = () => {
 				<path fill="currentColor"
 					d="M25.887 17.426 16 28.054 6.095 17.408l-.018-.018-.453-.488.02-.023c-2.406-3.098-2.255-7.715.45-10.623 2.707-2.91 7.002-3.07 9.886-.484l.02-.024.023.024.045-.042c2.883-2.543 7.146-2.368 9.837.526 2.706 2.908 2.857 7.525.45 10.624l.021.022-.455.49z">
 				</path>
-				</svg><span className={`md:block ml-1 ${isMobile?"hidden":""}`}>146473</span></button><button
-				className="button button-m text-secondary" type="button"><svg viewBox="0 0 32 32"
-				xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" className="size-6">
-				<path fill="currentColor"
-					d="m3.755 15.576 15.622-6.555c1.542-.683 6.771-2.869 6.771-2.869s2.413-.955 2.213 1.366c-.067.955-.603 4.302-1.14 7.92L25.547 26.16s-.134 1.57-1.276 1.844c-1.141.273-3.016-.955-3.352-1.229-.268-.204-5.028-3.277-6.772-4.78-.469-.41-1.005-1.229.067-2.185 2.414-2.253 5.297-5.054 7.04-6.829.804-.82 1.61-2.732-1.743-.41l-9.454 6.487s-1.073.683-3.083.069-4.358-1.434-4.358-1.434-1.61-1.025 1.14-2.117h.002z">
-				</path>
-				</svg></button></div>
+				</svg><span className={`md:block ml-1 ${isMobile?"hidden":""}`}>146473</span></button></div>
 			
 			<div className="flex items-center md:gap-2 flex-1 justify-end">
-			<div aria-pressed="true" data-pressed=""
-				className="inline-flex items-center justify-center font-extrabold transition-colors disabled:pointer-events-none disabled:opacity-40 text-primary data-[pressed]:text-brand h-10 px-4 rounded-xl !p-0 bg-transparent"
-				role="button" tabIndex={0}><button title="Sound" className="button button-m text-secondary"
-				type="button"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-					fill="none" className="size-6 transition-transform duration-300">
-					<path fill="currentColor"
-					d="m10.609 8.551.008.009 17.26 17.474a.987.987 0 0 1 0 1.387.963.963 0 0 1-1.362.009l-.009-.01-2.247-2.273c-1.01 1.32-2.246 2.095-3.582 2.095-.965 0-1.878-.405-2.691-1.126l-6.82-6.068H6.67c-1.66 0-2.83-1.877-2.83-4.192 0-2.249 1.104-4.085 2.689-4.181l.141-.005h4.28L9.247 9.946a.987.987 0 0 1 0-1.386.963.963 0 0 1 1.362-.009m10.069-4.094c3.416 0 6.189 5.09 6.189 11.393 0 2.399-.401 4.623-1.086 6.456l-3.23-3.34a6.15 6.15 0 0 0 .722-3.103 6.1 6.1 0 0 0-1.209-3.868 1.075 1.075 0 0 0-1.508-.114 1.09 1.09 0 0 0-.14 1.52c.49.724.734 1.587.694 2.462.02.483-.045.962-.19 1.418l-7.432-7.682 4.498-4.016c.813-.721 1.726-1.126 2.69-1.126z">
-					</path>
-				</svg></button></div><button title="HotKeys" className="button button-m text-secondary"
-				type="button"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-				fill="none" className="size-6 transition-transform duration-300 hover:scale-125 ">
-				<path fill="currentColor"
-					d="M24.333 5.334a5 5 0 0 1 5 5v11.333a5 5 0 0 1-5 5H7.667a5 5 0 0 1-5-5V10.334a5 5 0 0 1 5-5zm-2.11 14.222H9.777a1.778 1.778 0 0 0 0 3.555h12.444a1.777 1.777 0 1 0 0-3.555m-11.556-5.334H7.11a.89.89 0 0 0-.889.89v1.777c0 .49.398.889.89.889h3.555a.89.89 0 0 0 .889-.889v-1.778a.89.89 0 0 0-.89-.889m7.11 0h-3.555a.89.89 0 0 0-.889.89v1.777c0 .49.399.889.89.889h3.555a.89.89 0 0 0 .889-.889v-1.778a.89.89 0 0 0-.89-.889m7.112 0h-3.556a.89.89 0 0 0-.889.89v1.777c0 .49.399.889.89.889h3.555a.89.89 0 0 0 .889-.889v-1.778a.89.89 0 0 0-.89-.889M10.667 8.89H7.11a.89.89 0 0 0-.889.889v1.778c0 .49.398.889.89.889h3.555a.89.89 0 0 0 .889-.89V9.779a.89.89 0 0 0-.89-.889m7.11 0h-3.555a.89.89 0 0 0-.889.889v1.778c0 .49.399.889.89.889h3.555a.89.89 0 0 0 .889-.89V9.779a.89.89 0 0 0-.89-.889m7.112 0h-3.556a.89.89 0 0 0-.889.889v1.778c0 .49.399.889.89.889h3.555a.89.89 0 0 0 .889-.89V9.779a.89.89 0 0 0-.89-.889">
-				</path>
-				</svg></button><button className="button button-m text-secondary" type="button"><svg
-				viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none"
-				className="transition-transform duration-300 hover:scale-125 size-6">
-				<path fill="currentColor"
-					d="M25.461 5.249a3.44 3.44 0 0 1 1.485 6.545l-.002-.057q.027.93.022 1.79l-.011.679c-.151 6.343-1.785 9.75-5.373 9.75-1.894 0-3.369-.972-4.516-2.684q-.1-.15-.195-.301l-.186-.306-.178-.317-.174-.331q-.128-.255-.258-.538l-.174-.392-.179-.427-.186-.465-.196-.509-.21-.558-.517-1.404-.194-.512-.189-.478-.18-.443-.176-.41-.086-.193-.168-.362q-.041-.087-.082-.17l-.162-.316c-.696-1.306-1.304-1.785-2.077-1.785-1.273 0-2.272 1.39-2.813 4.397l-.081.488a22 22 0 0 0-.075.515l-.066.542-.03.282-.053.583-.024.302-.042.625q-.018.32-.033.653l-.024.681-.003.102a3.44 3.44 0 1 1-3.013-.012q.037-1.395.144-2.636l.063-.653c.616-5.782 2.522-8.878 6.048-8.878 1.8 0 3.196.946 4.284 2.605q.093.144.183.289l.174.293.168.303.164.317.162.338.164.362.083.193.171.411.18.45.19.494.31.835.305.832.202.541.197.506.19.47.183.439.09.207.178.39.087.183.172.344.17.315c.727 1.298 1.399 1.784 2.275 1.784.883 0 1.59-.93 1.995-2.914l.076-.397q.034-.205.067-.424l.059-.45q.029-.232.051-.478l.043-.504.034-.532.026-.56.01-.29.012-.601.003-.629q0-.322-.006-.658l-.016-.685-.003-.052a3.44 3.44 0 0 1 1.529-6.524z">
-				</path>
-				</svg></button><button title="Help"
+			<button title="Help" onClick={()=>handleOpenModal()}
 				className="button button-m transition-transform duration-300 text-secondary" type="button"><svg
 				viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none"
 				className="size-6 transition-transform duration-300 hover:scale-125">
@@ -113,6 +99,39 @@ const GameButtons = () => {
 				</path>
 				</svg></button>
 			</div>
+			
+			<Modal isOpen={isModalOpen} onClose={handleCloseModal} title="Probability Fairness Check">  
+				<SimpleBar className='fairbar' style={{height:'400px'}}>
+                <p style={{overflowWrap: "break-word",wordBreak: "break-all"}}>We are a fair and unbiased prediction and speculation platform.<br/>
+				Our goal is to remove all unfair elements and make players feel comfortable and enjoy themselves.<br/>
+				We have created a hash chain containing millions of hashes, the generated chain is user verifiable, and each hash corresponds to a crash multiplier.<br/>
+				We release these hashes in reverse order, each corresponding to one turn of the game.
+				That is, the crash numbers for each turn already exist and are not calculated after the game starts.<br/><br/>
+				The integrity check value is key to verifying whether there is any official manipulation; <br/>The test algorithm is provided as follows.
+				<br/>Example: <br/><br/>6b5124897c3c48d0e46cc9249f08c7e560792459f1bad1171224643b5d2be231<br/><br/>
+
+Take a random value in the 2^52 range, namely 16^13, i.e. a 13-bit hexadecimal <br/>number (because the hash value is hexadecimal, 2^52 === 16^13)<br/><br/>6b5124897c3c4 (0x6b5124897c3c4 equals 1887939992208324 in the decimal system).<br/>
+Distribute the random value to 0~1, by dividing it by the maximum value of 13 fs, <br/>namely 0x6b5124897c3c4/0x10000000000000.<br/> <br/>Given the discrete random nature of the hash value, we then can think that any hash value <br/>can be transformed into a random number of 0~1, 1887939992208324/4503599627370496 = 0.419206889692064.<br/><br/>
+Make the house edge 1%. <br/>Further to calculate 99/(1-X), where X is the random value calculated at Step 2. <br/>When X is 0, the result is 99; when X is 1, the result is positive infinite; when X is 0.01, the result is 100; <br/>when X is less than 0.01, the result is less than 100.<br/><br/>
+Conclusion: The overall random number distribution is 99 to positive infinite;<br/> and when the random number distribution is 0~0.01, the result is less than 100.
+<br/><br/>
+99/(1-0.419206889692064) = 170.45656748150867
+<br/><br/>
+All values less than 100 will be set to 100. <br/>In other words, there is a probability of 1% that 100 will appear. <br/>Round off the number and divide it by 100 to get the final result.<br/><br/>
+170/100 = 1.70
+<br/><br/>
+You can check this yourself by looking at the last 5 hashes.<br/>
+You can also check if this is a hash chain. If you take the sha256 of the hash value above, <br/>you can check if you get the hash value below.<br/><br/>
+</p>
+				{
+					crashes.slice(-7).reverse().map((item, idx)=>{
+						return <p style={{overflowWrap: "break-word",wordBreak: "break-all"}} key={idx}><span style={{fontWeight:700}}>{((Number)(item.multiplier)).toFixed(2)}</span>&nbsp;&nbsp;{item.hash}</p>
+					})
+				} 
+				<br/>
+				</SimpleBar>
+            </Modal>  
+
 		</div>
 	);
 }
