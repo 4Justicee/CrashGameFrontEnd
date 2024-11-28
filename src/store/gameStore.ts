@@ -234,7 +234,7 @@ export const useGameStore = create<GameState>((set, get) => {
 				//players,
 				status: 'Crashed',
 				crashedTime: Date.now(),
-				crashes: crashes.length >= 15   
+				crashes: crashes.length >= 36   
 					? [...crashes.slice(1), params.game]  // Remove the first element and add the new game at the end  
 					: [...crashes, params.game], 
 				timeElapsed: params.game.duration,

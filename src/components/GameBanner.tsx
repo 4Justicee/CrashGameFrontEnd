@@ -4,15 +4,21 @@ import { useRef, useEffect, useState } from 'react';
 
 import { useGameStore, GameState } from '../store/gameStore';
 import useWindowSize from './ui/size';
+import { TrendChart } from './TrendChart';
 
 export const GameBanner = ()=>{
 	const crashes = useGameStore((gameState) => gameState.crashes);
 	const [isMobile, setIsMobile] = useState(false);  
+	const [isShowTrendChart, setShowTrendChart] = useState(false);  
   
 	useEffect(() => {  
 		setIsMobile(window.innerWidth < 768);  
 	}, []);  
 	
+	const showTrendChart = (bShow:boolean)=> {
+		setShowTrendChart(bShow)
+	}
+
 	const cnt = isMobile ? -5 : -7;
 	const styleString = !isMobile ? "calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem) calc(14.2857% - 0.285714rem)" : "calc(20% - 0.3rem) calc(20% - 0.3rem) calc(20% - 0.3rem) calc(20% - 0.3rem) calc(20% - 0.3rem) calc(20% - 0.3rem)";
 	return (
@@ -37,14 +43,13 @@ export const GameBanner = ()=>{
 					}
 				</div>
 			</div>
-			<div
-				className="flex w-[2rem] h-[2rem] justify-center items-center ml-[0.5rem] bg-layer4 rounded-md md:rounded-lg box-border p-2 md:w-10 md:h-10">
-				<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="none"
-				className="scale-110 md:scale-75 text-secondary">
+			<div className="cursor-pointer flex w-[2.5rem] h-[2.5rem] justify-center items-center ml-[0.5rem] bg-layer4 rounded-md md:rounded-lg box-border p-2 md:w-10 md:h-10"> <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="none" className="scale-110 md:scale-75 text-success" onClick={()=>showTrendChart(true)}>
 				<path fill="currentColor"
 					d="M7.534 21.08a3.388 3.388 0 1 1-.001 6.775 3.388 3.388 0 0 1 0-6.775m16.932 0a3.387 3.387 0 1 1 0 6.775 3.387 3.387 0 0 1 0-6.775M7.534 12.613a3.387 3.387 0 1 1-.001 6.775 3.387 3.387 0 0 1 0-6.775m16.932 0a3.387 3.387 0 1 1 0 6.775 3.387 3.387 0 0 1 0-6.775m-8.466 0a3.387 3.387 0 1 1 0 6.775 3.387 3.387 0 0 1 0-6.775M7.534 4.146a3.388 3.388 0 1 1-.001 6.776 3.388 3.388 0 0 1 0-6.776m16.932 0a3.387 3.387 0 1 1 0 6.775 3.387 3.387 0 0 1 0-6.775m-8.466 0a3.387 3.387 0 1 1 0 6.775 3.387 3.387 0 0 1 0-6.775">
 				</path>
-				</svg>
+			</svg>
+
+				{isShowTrendChart && <TrendChart showTrendChart={showTrendChart}/> }
 			</div>
 		</div>
 	)
