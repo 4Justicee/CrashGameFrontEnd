@@ -75,13 +75,13 @@ export const getValueMultiplier = (value: number): number => {
 	else if(value > 80) {
 		multiplier = 0.7;
 	}
-	else if(value > 30) {
+	else if(value > 25) {
 		multiplier = 0.6;
 	}
-	else if(value > 13) {
+	else if(value > 12) {
 		multiplier = 0.5;
 	}
-	else if(value > 5) {
+	else if(value > 4) {
 		multiplier = 0.4;
 	}	
 	return multiplier;
@@ -110,13 +110,13 @@ export const calculateYI = (value: number): number=> {
 	else if(value > 80) {
 		multiplier = 0.7;
 	}
-	else if(value > 30) {
+	else if(value > 25) {
 		multiplier = 0.6;
 	}
-	else if(value > 13) {
+	else if(value > 12) {
 		multiplier = 0.5;
 	}
-	else if(value > 5) {
+	else if(value > 4.5) {
 		multiplier = 0.4;
 	}	
 	const multi = 1 / multiplier;

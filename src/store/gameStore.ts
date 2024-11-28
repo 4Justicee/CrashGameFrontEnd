@@ -9,6 +9,7 @@ import { create } from "zustand";
 import { elapsedToMultiplier } from '../lib/utils';
 
 import Cookies from 'js-cookie';  
+import { toast } from "sonner";
 
 export type GameStatus =
 	'Unknown'
@@ -42,35 +43,44 @@ export type CrashedGame = {
 	players: number;
 	winners: number;
 	startTime: number;
+	roundId: number;
 	hash: string;
+}
+
+export type Balance = {
+	user_id: number;
+	currency: string;
+	balance: number;
 }
 
 export type GameStateData = {
 	gameId: string|null,
-	status: GameStatus;
-	players: Bet[];
-	waiting: Bet[];
-	startTime: number;
-	crashedTime: number;
+	status: GameStatus,
+	players: Bet[],
+	waiting: Bet[],
+	totalPlayers: number,
+	startTime: number,
+	crashedTime: number,
 	winTime: number,
-	isConnected: boolean;
-	isLoggedIn: boolean;
-	isWaiting: boolean;
-	isPreparing: boolean;
-	isPlaying: boolean
-	isCashedOut: boolean;
-	timeRemaining: number;
-	timeElapsed: number;
-	timeCrashElapsed:number;
-	multiplier: string;
-	crashes: CrashedGame[];
-	ethBalance: Number,
-	btcBalance: Number,
-	wallet: string|null;
-	myWin: number; //0-not participate, 1-not win, 2-win
+	isConnected: boolean,
+	isLoggedIn: boolean,
+	isWaiting: boolean,
+	isPreparing: boolean,
+	isPlaying: boolean,
+	isCashedOut: boolean,
+	autoBetCount: number,
+	timeRemaining: number,	
+	timeElapsed: number,
+	timeCrashElapsed:number,
+	multiplier: string,
+	crashes: CrashedGame[],
+	balances: Balance[],
+	selectedCurrency: string,
+	wallet: string|null,
+	myWin: number, //0-not participate, 1-not win, 2-win
 	uid: number,
-	errors: string[];
-	errorCount: number;
+	errors: string[],
+	errorCount: number,
 }
 
 export type GameActions = {
@@ -78,8 +88,11 @@ export type GameActions = {
 	login: () => void;
 	getNonce: () => Promise<string>;
 	placeBet: (betAmount: string, autoCashOut: string, currency: string) => void;
+	placeAutoBet: (betAmount: number, autoCashOut: number, currency: string, autoCount: number) => void;
 	cashOut: () => void;
 	cancelBet: () => void;
+	cancelAutoBet: () => void;
+	setCurrency: (currency:string) => void;
 }
 
 export type GameState = GameStateData & { actions: GameActions };
@@ -89,6 +102,7 @@ const initialState : GameStateData = {
 	status: 'Unknown',
 	players: [],
 	waiting: [],
+	totalPlayers: 0,
 	startTime: 0,
 	crashedTime : 0,
 	winTime : 0,
@@ -98,13 +112,14 @@ const initialState : GameStateData = {
 	isPreparing: false,
 	isPlaying: false,
 	isCashedOut: false,
+	autoBetCount : 0,
 	timeRemaining: 0,
 	timeElapsed: 0,
 	timeCrashElapsed: 0,
 	multiplier: '0',
 	crashes: [],
-	ethBalance : 0,
-	btcBalance : 0,
+	balances:[],
+	selectedCurrency:"BTC",
 	wallet: null,
 	myWin: 0,
 	uid: 0,
@@ -122,38 +137,6 @@ export const useGameStore = create<GameState>((set, get) => {
 	let gameWaitTimer: ReturnType<typeof setInterval>|null = null;
 	let gameRunTimer: ReturnType<typeof setInterval>|null = null;
 	let crashRunTimer: ReturnType<typeof setInterval>|null = null;
-
-	const gameWaiter = () => {
-		const { startTime } = get();
-		const timeRemaining = Math.round((startTime - new Date().getTime())/1000);		
-		if (timeRemaining <= 0) {
-			set({ timeRemaining: 0 });
-
-			if (gameWaitTimer) {
-				clearInterval(gameWaitTimer);
-				gameWaitTimer = null;
-			}
-		} else {
-			set({ timeRemaining });
-		}
-	};
-
-	const gameRunner = () => {
-		const { startTime, status } = get();
-		const timeElapsed = Math.round(new Date().getTime() - startTime);
-
-		if (status != 'Running') {
-			if (gameRunTimer) {
-				clearInterval(gameRunTimer);
-				gameRunTimer = null;
-			}
-		} else {
-			set({
-				timeElapsed,
-				multiplier: elapsedToMultiplier(timeElapsed)
-			});
-		}
-	};
 
 	const crashTimer = () => {
 		const {crashedTime, status} = get();
@@ -229,10 +212,6 @@ export const useGameStore = create<GameState>((set, get) => {
 			});
 		}
 		else if(data.type == "GameRunning") {
-			//console.log('Game in running state')
-
-			//console.log("StartTime latency:", new Date().getTime() - params.startTime);
-
 			set({
 				startTime: params.startTime,
 				status: 'Running'
@@ -247,12 +226,8 @@ export const useGameStore = create<GameState>((set, get) => {
 				clearInterval(gameRunTimer);
 				gameRunTimer = null;
 			}
-
-			//gameRunTimer = setInterval(gameRunner, 5);
 		}
 		else if(data.type == "GameCrashed") {
-			//console.log('Game in crashed state')
-
 			const { players, crashes, uid } = get();			
 
 			set({
@@ -293,6 +268,7 @@ export const useGameStore = create<GameState>((set, get) => {
 			set({
 				players: params.players,
 				waiting: params.waiting,
+				totalPlayers: params.totalPlayers,
 				isWaiting: !!waiting,
 				isPlaying: !!playing,
 				isCashedOut: !!playerInList?.isCashedOut,
@@ -309,7 +285,7 @@ export const useGameStore = create<GameState>((set, get) => {
 				newPlayers[index].cashOutTime = new Date();
 
 				if (uid == params.uid) {		
-					set({ players: newPlayers, isCashedOut: true, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin:2, winTime:Date.now() });
+					set({ players: newPlayers, isCashedOut: true, balances: params.balance, myWin:2, winTime:Date.now() });
 				} else {
 					set({ players: newPlayers });
 				}
@@ -324,7 +300,7 @@ export const useGameStore = create<GameState>((set, get) => {
 		}
 		else if(data.type == "login") {
 			if (params?.success)
-				set({ isLoggedIn: true, uid: params.uid, ethBalance: params.ethBalance, btcBalance: params.btcBalance });
+				set({ isLoggedIn: true, uid: params.uid, balances: params.balance});
 			else
 				set({ isLoggedIn: false, uid: 0});
 		}
@@ -341,13 +317,36 @@ export const useGameStore = create<GameState>((set, get) => {
 				});
 			}
 			else {
-				set({isPreparing : params.isPreparing == 1, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin: 1})
+				set({isPreparing : params.isPreparing == 1, balances: params.balance, myWin: 1})
 			}
 		}
 		else if(data.type == "cancelBet") {
 			if (params?.success) {
-				set({isWaiting: false, ethBalance: params.ethBalance, btcBalance: params.btcBalance, myWin:0});
+				set({isWaiting: false, balances: params.balance, myWin:0, isPreparing:false});
 			}
+		}
+		else if(data.type == "autoBet") {
+			if (params?.success) {
+				toast("⚠️ Autobet started.");
+				set({autoBetCount: params.count});
+			}			
+		}
+		else if(data.type == "cancelAutoBet") {
+			if (params?.success) {
+				toast("⚠️ Auto bet canceled.");
+				set({autoBetCount: 0});
+			}			
+		}
+		else if(data.type == "auto_cancel") {
+			if (params?.success) {
+				toast("⚠️ Can not continue auto bet due to insufficent fund.");
+				set({autoBetCount: 0});
+			}			
+		}
+		else if(data.type == "auto_count") {
+			if (params?.success) {
+				set({autoBetCount: params.count, balances: params.balance});
+			}			
 		}
 	}
 
@@ -410,6 +409,19 @@ export const useGameStore = create<GameState>((set, get) => {
 			}));
 		},
 
+		placeAutoBet: (betAmount: number, autoCashOut: number, currency: string, autoCount: number ) => {
+			const token = Cookies.get('token') ?? '';
+
+			socket.send(JSON.stringify({
+				type:'autoBet',
+				token,
+				betAmount,
+				autoCashOut,
+				currency,
+				autoCount
+			}));
+		},
+
 		cashOut: () => {
 			//console.log(`Cashing out...`);
 			
@@ -434,6 +446,21 @@ export const useGameStore = create<GameState>((set, get) => {
 				token,
 			}));
 		},
+
+		cancelAutoBet: () => {
+			//console.log(`Cancelling bet...`);
+
+			const token = Cookies.get('token') ?? "";
+
+			socket.send(JSON.stringify({
+				type:'cancelAutoBet',
+				token,
+			}));
+		},
+
+		setCurrency: (currency: string)=>{
+			set({selectedCurrency : currency})
+		}
 	};
 
 	return {
