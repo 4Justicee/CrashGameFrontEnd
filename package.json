@@ -31,6 +31,7 @@
     "postcss": "^8.4.38",
     "react": "^18",
     "react-dom": "^18",
+    "simplebar-react": "^3.2.6",
     "siwe": "^2.3.2",
     "socket.io-client": "^4.8.1",
     "sonner": "^1.5.0",

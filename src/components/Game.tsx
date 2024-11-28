@@ -8,7 +8,6 @@ import styles from '../styles/components/Game.module.css';
 import { getMultiplier, getValueMultiplier, calculateXI, interpolate, calculateYI} from '@/lib/utils';
 
 let explodeImage: HTMLImageElement;
-//let craneImage: HTMLImageElement;
 let loadImage: HTMLImageElement;
 
 if (typeof window !== 'undefined') {
@@ -16,15 +15,9 @@ if (typeof window !== 'undefined') {
 	explodeImage = new Image();
 	explodeImage.src = 'explode.svg';
 
-	//craneImage = new Image();
-	//craneImage.src = 'crane.png'
-
 	loadImage = new Image();
 	loadImage.src = 'load.png'
 }
-
-//const craneWidth = 3600;
-//const craneHeight = 2200;
 
 const loadWidth = 180;
 const loadHeight = 190;
@@ -33,7 +26,7 @@ const xStartPosition = 1000;
 const xMaxPosition = 3500; //max length of crane arm
 
 const aa = 0.517;	
-const bb = 110; //ax+b of arm of crane
+const bb = -90; //ax+b of arm of crane
 
 function render(
 	gameState: GameState,
@@ -50,8 +43,6 @@ function render(
 	const minY = loadHeight;
 
 	context.save();
-
-	drawCrane(context);
 
 	const position = calcLoadPosition(context, gameState.timeElapsed, gameState.multiplier, gameState.status);
 	const expectedX = position.lastX;//gameState.timeElapsed;
@@ -144,10 +135,6 @@ function drawValueAxis(context:CanvasRenderingContext2D, multiplier:string,canva
     context.stroke();  
 } 
 
-function drawCrane(context: CanvasRenderingContext2D) {
-	//context.drawImage(craneImage, 0, 0, craneWidth, craneHeight);
-}
-
 function drawMultiplier(
 	context: CanvasRenderingContext2D,
 	multiplier: string,
@@ -234,8 +221,7 @@ function drawLoad(
 	context.stroke();
 
 	context.translate(x - loadWidth/2, y - loadHeight/2);
-	context.drawImage(loadImage, 0, 0, loadWidth, loadHeight);
-	
+	context.drawImage(loadImage, 0, 0, loadWidth, loadHeight);	
 	
 }	
 
@@ -285,7 +271,7 @@ export default function Game() {
 			const canvas = canvasRef.current;
 			const aspectRatio = canvas.clientWidth / canvas.clientHeight;			
 			canvas.width = 4000;
-			canvas.height = 2000;//Math.round(4000 * aspectRatio);
+			canvas.height = 1800;//Math.round(4000 * aspectRatio);
 		}
 		setContext(ctx);
 	}, []);
