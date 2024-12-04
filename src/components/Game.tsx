@@ -2,10 +2,11 @@
 
 import { useRef, useEffect, useState } from 'react';
 
-import { useGameStore, GameState } from '../store/gameStore';
+import { useGameStore, GameState, CashedUser } from '../store/gameStore';
 
 import styles from '../styles/components/Game.module.css';
 import { getMultiplier, getValueMultiplier, calculateXI, interpolate, calculateYI} from '@/lib/utils';
+import { X } from 'lucide-react';
 
 let explodeImage: HTMLImageElement;
 let loadImage: HTMLImageElement;
@@ -54,9 +55,9 @@ function render(
 	if (gameState.status == 'Crashed')
 		drawCrashedLoad(context, gameState.timeCrashElapsed, rocketX, rocketY);
 	else
-		drawLoad(context, gameState.timeElapsed, rocketX, rocketY);
+		drawLoad(context, gameState.timeElapsed, gameState.cashOutUsers, rocketX, rocketY);
 
-	
+
 	context.restore();
 
 	if (gameState.status == 'Waiting')
@@ -204,9 +205,47 @@ function calcLoadPosition(
 function drawLoad(
 	context: CanvasRenderingContext2D,
 	timeElapsed: number,
+	cashOutUsers: CashedUser[],
 	x: number,
 	y: number,
 ) {
+
+	const fallSpeed = 0.2; // Vertical speed of falling, adjust as needed  
+    const fadeDuration = 3000; // Duration in milliseconds for a cash-out to fade out  
+	const canvas = context.canvas;
+	const originY = context.canvas.height;
+	const valueInterval = originY / 10;
+
+    cashOutUsers.forEach(event => {  
+        const timeSinceCashOut = timeElapsed - event.winTime;  
+
+		let vx = (calculateXI( event.winTime / 1000) * (xMaxPosition - xStartPosition) / 10) + xStartPosition;
+		let vy = canvas.height - calculateYI(Number(event.cashOut)) * valueInterval;
+
+        // Calculate how far the icon has fallen  
+        const fallDistance = fallSpeed * timeSinceCashOut;  
+
+        // Calculate the opacity: starts with 1 and fades to 0 at fadeDuration  
+        const opacity = Math.max(1 - timeSinceCashOut / fadeDuration, 0);  
+
+        // Only draw if the event is recent enough to still be visible  
+        if (timeSinceCashOut < fadeDuration) {  
+            // Set the font size smaller for better fitting on the canvas  
+            context.font = "60px Arial"; // Adjusted from 160px to 20px  
+            context.textAlign = "center";  
+
+            // Correctly using calculated opacity in fill style  
+            context.fillStyle = `rgba(255, 0, 0, ${opacity})`;  
+
+            // Drawing a circle to represent the cash-out  
+            const yPosition = vy + fallDistance;  
+            context.beginPath();  
+            context.arc(vx, yPosition-62, 10, 0, 2 * Math.PI);  
+            context.fill();  
+ 
+            context.fillText(`${event.userCode} @${event.cashOut}x`, vx, yPosition);  
+        }  
+    });
 
 	context.strokeStyle = '#707070';  // Red line  
 	context.lineWidth = 8;
@@ -221,8 +260,8 @@ function drawLoad(
 	context.stroke();
 
 	context.translate(x - loadWidth/2, y - loadHeight/2);
-	context.drawImage(loadImage, 0, 0, loadWidth, loadHeight);	
-	
+	context.drawImage(loadImage, 0, 0, loadWidth, loadHeight);		
+
 }	
 
 function drawCrashedLoad(

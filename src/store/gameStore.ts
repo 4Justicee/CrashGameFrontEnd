@@ -36,6 +36,12 @@ export type Bet = {
 	winnings: string;
 }
 
+export type CashedUser = {
+	userCode: string;
+	cashOut: string;
+	winTime: number;
+}
+
 export type CrashedGame = {
 	id: string;
 	duration: number,
@@ -57,6 +63,7 @@ export type GameStateData = {
 	gameId: string|null,
 	status: GameStatus,
 	players: Bet[],
+	cashOutUsers: CashedUser[],
 	waiting: Bet[],
 	totalPlayers: number,
 	startTime: number,
@@ -101,6 +108,7 @@ const initialState : GameStateData = {
 	gameId: null,
 	status: 'Unknown',
 	players: [],
+	cashOutUsers: [],
 	waiting: [],
 	totalPlayers: 0,
 	startTime: 0,
@@ -191,6 +199,7 @@ export const useGameStore = create<GameState>((set, get) => {
 				winTime: 0,
 				isPreparing : false,
 				multiplier : '0',
+				cashOutUsers: [],
 			});
 
 			if (gameWaitTimer) {
@@ -276,7 +285,7 @@ export const useGameStore = create<GameState>((set, get) => {
 			});
 		}
 		else if(data.type == "PlayerWon") {		
-			const { players, uid } = get();
+			const { players, cashOutUsers, uid } = get();
 			const index = players.findIndex((player) => player.uid == params.uid);
 			if (index != -1) {
 				const newPlayers = [...players];
@@ -285,10 +294,17 @@ export const useGameStore = create<GameState>((set, get) => {
 				newPlayers[index].cashOut = params.multiplier;
 				newPlayers[index].cashOutTime = new Date();
 
+				const cash_users = [...cashOutUsers];
+				cash_users.push({
+					userCode:'Hidden',
+					cashOut: params.multiplier,
+					winTime: params.time
+				});
+				
 				if (uid == params.uid) {		
-					set({ players: newPlayers, isCashedOut: true, balances: params.balance, myWin:2, winTime:Date.now() });
+					set({ players: newPlayers, cashOutUsers: cash_users, isCashedOut: true, balances: params.balance, myWin:2, winTime:Date.now() });
 				} else {
-					set({ players: newPlayers });
+					set({ players: newPlayers, cashOutUsers: cash_users });
 				}
 			}
 		}				
